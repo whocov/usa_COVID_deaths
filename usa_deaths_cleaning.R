@@ -29,9 +29,9 @@ usa_deaths_agegroup <- jsonlite::fromJSON(usa_deaths_agegroup, flatten = TRUE)
 # data cleaning
 linelist <- usa_deaths %>%
   clean_names() %>%
-  select(country_name=state, week_ending_date, covid_19_deaths) %>%                          # select desired columns
-  mutate(country_name= 
-         recode(country_name, 
+  select(Country=state, week_ending_date, covid_19_deaths) %>%                          # select desired columns
+  mutate(Country= 
+         recode(Country, 
                 "United States" = "UNITED STATES OF AMERICA"))%>%       # recode usa name
   distinct()%>%                                                        # remove duplication
   mutate(week_ending_date        = as.Date(week_ending_date),                           # convert end_date in date
@@ -46,7 +46,7 @@ linelist <- usa_deaths %>%
          ISO_3_CODE  = "USA")%>%                                        # create ISO Code column
   select(-week_ending_date)%>%
   
-  filter(country_name == "UNITED STATES OF AMERICA")%>%  # filter only United States
+  filter(Country == "UNITED STATES OF AMERICA")%>%  # filter only United States
   filter(year > "2022")
 
 ## data clean agegroup dataset
