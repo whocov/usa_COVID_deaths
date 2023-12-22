@@ -29,25 +29,31 @@ usa_deaths_agegroup <- jsonlite::fromJSON(usa_deaths_agegroup, flatten = TRUE)
 # data cleaning
 linelist <- usa_deaths %>%
   clean_names() %>%
-  select(Country=state, week_ending_date, covid_19_deaths) %>%                          # select desired columns
-  mutate(Country= 
-         recode(Country, 
+  select(COUNTRY_NAME = state, week_ending_date, CASES_DEATHS = covid_19_deaths) %>%                          # select desired columns
+  mutate(COUNTRY_NAME= 
+         recode(COUNTRY_NAME, 
                 "United States" = "UNITED STATES OF AMERICA"))%>%       # recode usa name
   distinct()%>%                                                        # remove duplication
   mutate(week_ending_date        = as.Date(week_ending_date),                           # convert end_date in date
-         covid_19_deaths = as.numeric(covid_19_deaths))%>%              # convert deaths in numeric value
+         CASES_DEATHS = as.numeric(CASES_DEATHS))%>%              # convert deaths in numeric value
   mutate(epiweek = floor_date(                                          # create the epiweek column
                               week_ending_date,
                               unit = "week",
                               week_start = 1))%>%
-  mutate(year = year(epiweek),                                          # create  year column
-         week_number = week(epiweek),                                   # create  week column
+  mutate(ISO_YEAR = year(epiweek),                                          # create  year column
+         ISO_WEEK = week(epiweek),                                   # create  week column
          WHO_REGION  = "AMRO",                                          # create WHO_region column
-         ISO_3_CODE  = "USA")%>%                                        # create ISO Code column
+         ISO_3_CODE  = "USA",
+         SEX = "All",
+         AGEGROUP = "All",
+         AGEGROUP_NUM = 0)%>%                                        # create ISO Code column
   select(-week_ending_date)%>%
   
-  filter(Country == "UNITED STATES OF AMERICA")%>%  # filter only United States
-  filter(year > "2022")
+  filter(COUNTRY_NAME == "UNITED STATES OF AMERICA")%>%  # filter only United States
+  filter(ISO_YEAR > "2022")
+
+
+
 
 ## data clean agegroup dataset
 linelist_agegroup <- usa_deaths_agegroup%>%
@@ -62,16 +68,24 @@ linelist_agegroup <- usa_deaths_agegroup%>%
     unit = "week",
     week_start = 1))%>%
   mutate(year = year(epiweek),                                          # create  year column
-         week_number = week(epiweek),                                   # create  week column
+         ISO_WEEK = week(epiweek),                                   # create  week column
          WHO_REGION  = "AMRO",                                          # create WHO_region column
-         ISO_3_CODE  = "USA")%>%                                        # create ISO Code column
+         ISO_3_CODE  = "USA",
+         SEX = "All",
+         AGEGROUP = "All",
+         AGEGROUP_NUM = 0
+         )%>%                                        # create ISO Code column
   select(-week_ending_date)
+
+linelist_agegroup%>%group_by(state, epiweek, age_group, sex)%>%
+  summarise(deaths = sum(covid_19_deaths, na.rm = T))%>%view()
 
 
 # split agegroup into two columns
 linelist_agegroup_1 <- linelist_agegroup%>%
-  separate(age_group, into = c("agegroup_num", "agegroup_year", "other"), sep = " ", extra = "merge")%>%
-  separate(sex, into = c("gender", "remove"), sep = " ", extra = "merge")
+  separate(age_group, into = c("agegroup_num", "agegroup_year", "other"), sep = " ", extra = "merge")
+
+# all sex and unknown
 
 # New  column with WHO agegroup
 linelist_agegroup_2 <- linelist_agegroup_1%>%
@@ -93,7 +107,7 @@ linelist_agegroup_2 <- linelist_agegroup_1%>%
 
 # select interested columns
 deaths_agegroup <- linelist_agegroup_2%>%
-  select(WHO_REGION, ISO_3_CODE, country_name = state, year, week_number, epiweek, covid_19_deaths, sex= gender, age_group)
+  select(WHO_REGION, ISO_3_CODE, country_name = state, year, week_number, epiweek, covid_19_deaths, age_group)
 
 ## pivot data wider
 
@@ -102,21 +116,18 @@ library(dplyr)
 deaths_agegroup_1 <- deaths_agegroup%>%
   mutate(covid_19_deaths = as.numeric(covid_19_deaths),
          age_group       = as.character(age_group))%>%
-  mutate(sex = recode(sex, "Male"   =  "M",
-                           "Female" = "F"
-                      ))%>%
-  filter(age_group != "All" & sex != "All")%>%
-  mutate(agegroup_sex = str_c(age_group, sex, sep = "_" ))%>%
-  select(-c(sex, age_group, week_number))%>%
+  filter(age_group != "All" & covid_19_deaths> 0)%>%
+  select(- week_number)%>%
   distinct()
 
-#deaths_agegroup_piv <- deaths_agegroup_1%>%
-#  pivot_wider(
-#    names_from = "agegroup_sex",
-#    values_from = "covid_19_deaths")
+deaths_agegroup_piv <- deaths_agegroup_1%>%
+  pivot_wider(
+    names_from = age_group,
+    values_from = covid_19_deaths)
 
 # join agegroup and aggregated deaths tables
 
+export(linelist, here("data", "usa_agegroup_deaths.csv"))
 export(linelist, here("data", "usa_deaths.csv"))
 
 
