@@ -107,7 +107,7 @@ linelist_agegroup_2 <- linelist_agegroup_1%>%
 
 # select interested columns
 deaths_agegroup <- linelist_agegroup_2%>%
-  select(WHO_REGION, ISO_3_CODE, country_name = state, year, week_number, epiweek, covid_19_deaths, age_group)
+  select(WHO_REGION, ISO_3_CODE, country_name = state, year, ISO_WEEK, epiweek, covid_19_deaths, age_group)
 
 ## pivot data wider
 
@@ -117,7 +117,7 @@ deaths_agegroup_1 <- deaths_agegroup%>%
   mutate(covid_19_deaths = as.numeric(covid_19_deaths),
          age_group       = as.character(age_group))%>%
   filter(age_group != "All" & covid_19_deaths> 0)%>%
-  select(- week_number)%>%
+  select(- ISO_WEEK)%>%
   distinct()
 
 deaths_agegroup_piv <- deaths_agegroup_1%>%
