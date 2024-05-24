@@ -131,6 +131,10 @@ export(linelist, here("data", "usa_agegroup_deaths.csv"))
 export(linelist, here("data", "usa_deaths.csv"))
 
 
+## age_group
+## age_group_num
+## sex
+
 
 
 
