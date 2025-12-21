@@ -6,6 +6,9 @@
 # Import package
 pacman::p_load(here, rio, janitor, lubridate, tidyverse, httr, jsonlite, gtsummary)
 
+
+library(dplyr)
+
 # import dataset with total deaths cases by week
 path <- "https://data.cdc.gov/resource/r8kw-7aab.json?$limit=50000"  # prepare request and take first 50000 rows
 request <- GET(url = path)                                           # get path
@@ -111,7 +114,6 @@ deaths_agegroup <- linelist_agegroup_2%>%
 
 ## pivot data wider
 
-library(dplyr)
 
 deaths_agegroup_1 <- deaths_agegroup%>%
   mutate(covid_19_deaths = as.numeric(covid_19_deaths),
